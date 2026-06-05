@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>swiftform | nitmoi</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        :root {
+            --blue-night: #042C53;
+            --blue-core:  #185FA5;
+            --blue-mid:   #378ADD;
+            --blue-sky:   #B5D4F4;
+            --blue-ice:   #E6F1FB;
+            --white:      #ffffff;
+            --text-main:  #1e293b;
+            --text-muted: #64748b;
+            --radius:     12px;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+        body { background:var(--blue-ice); color:var(--text-main); line-height:1.6; overflow-x:hidden; }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 5%; background:var(--blue-night);
+            position:sticky; top:0; z-index:1000;
+        }
+        .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .nav-logo { width:32px; height:32px; background:var(--blue-core); border-radius:8px; display:flex; align-items:center; justify-content:center; }
+        .nav-logo svg { width:20px; height:20px; }
+        .nav-wordmark { display:flex; flex-direction:column; line-height:1.1; }
+        .nav-name { font-size:1rem; font-weight:500; color:var(--blue-ice); letter-spacing:-0.01em; }
+        .nav-tool { font-size:0.7rem; color:var(--blue-sky); letter-spacing:0.02em; }
+        .privacy-badge { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(181,212,244,0.3); border-radius:999px; padding:5px 12px; }
+        .privacy-dot { width:7px; height:7px; border-radius:50%; background:var(--blue-mid); }
+        .privacy-text { font-size:0.72rem; color:var(--blue-sky); white-space:nowrap; }
+
+        .hero { padding:3.5rem 5% 2rem; text-align:center; max-width:820px; margin:0 auto; }
+        .hero h1 { font-size:clamp(2rem,6vw,3.2rem); font-weight:500; letter-spacing:-0.02em; line-height:1.15; margin-bottom:1rem; color:var(--blue-night); }
+        .hero h1 span { color:var(--blue-core); }
+        .hero p { font-size:1.05rem; color:var(--text-muted); margin-bottom:0.5rem; }
+        .hero-pledge { font-size:0.85rem; color:var(--blue-core); font-weight:500; margin-top:0.75rem; }
+
+        .workspace { max-width:1100px; margin:0 auto 4rem; padding:0 5%; }
+
+        .upload-zone { border:2px dashed var(--blue-sky); background:var(--white); border-radius:var(--radius); padding:3rem 2rem; text-align:center; transition:all 0.25s ease; cursor:pointer; position:relative; }
+        .upload-zone:hover { border-color:var(--blue-core); background:var(--blue-ice); }
+        .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+        .upload-icon { font-size:2.5rem; margin-bottom:0.75rem; display:block; }
+        .upload-zone h3 { font-size:1.1rem; font-weight:500; color:var(--text-main); margin-bottom:0.4rem; }
+        .upload-zone p  { font-size:0.875rem; color:var(--text-muted); }
+
+        #editor-container { display:none; background:var(--blue-night); border-radius:var(--radius); padding:16px; margin-top:1.5rem; flex-direction:column; align-items:center; }
+
+        .toolbar { width:100%; background:var(--white); padding:10px 14px; border-radius:8px; margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; position:sticky; top:68px; z-index:10; }
+
+        .btn { padding:0.5rem 1.1rem; border-radius:6px; border:none; font-weight:500; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:6px; font-size:0.875rem; }
+        .btn-primary { background:var(--blue-core); color:var(--white); }
+        .btn-primary:hover { background:var(--blue-night); }
+        .btn-outline { background:var(--blue-ice); color:var(--text-main); border:1px solid var(--blue-sky); }
+        .btn-outline:hover { background:var(--blue-sky); }
+
+        #pdf-viewer-wrapper { position:relative; background:var(--white); min-height:500px; width:100%; max-width:800px; overflow:hidden; }
+        canvas#pdf-canvas { width:100%; display:block; }
+
+        .annotation-layer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+
+        .draggable-text { position:absolute; pointer-events:auto; border:1px dashed var(--blue-core); padding:4px 8px; background:rgba(24,95,165,0.07); cursor:move; min-width:50px; outline:none; font-size:15px; color:black; }
+        .draggable-signature { position:absolute; pointer-events:auto; cursor:move; max-width:150px; border:1px dashed var(--blue-mid); }
+
+        .modal { display:none; position:fixed; inset:0; background:rgba(4,44,83,0.6); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+        .modal-content { background:var(--white); padding:2rem; border-radius:var(--radius); width:100%; max-width:480px; text-align:center; }
+        .modal-content h2 { font-size:1.2rem; font-weight:500; color:var(--blue-night); margin-bottom:0.4rem; }
+        .modal-content p  { font-size:0.875rem; color:var(--text-muted); margin-bottom:1rem; }
+
+        #sig-canvas { border:1.5px solid var(--blue-sky); border-radius:8px; width:100%; max-width:400px; cursor:crosshair; display:block; margin:0 auto 1rem; touch-action:none; }
+
+        .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; max-width:1100px; margin:0 auto 3rem; padding:0 5%; }
+        .feature-card { background:var(--white); border:1px solid var(--blue-sky); border-radius:var(--radius); padding:1.25rem 1.5rem; }
+        .feature-card h3 { font-size:0.95rem; font-weight:500; color:var(--blue-night); margin-bottom:0.4rem; }
+        .feature-card p  { font-size:0.85rem; color:var(--text-muted); line-height:1.6; }
+
+        footer { background:var(--blue-night); color:var(--blue-sky); text-align:center; padding:1.5rem 5%; font-size:0.78rem; line-height:1.9; }
+        footer .footer-brand { font-weight:500; color:var(--blue-ice); }
+
+        .fade-in { animation:fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a class="nav-brand" href="#">
+            <div class="nav-logo">
+                <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="24" y="8" width="4" height="14" rx="2" fill="#E6F1FB"/>
+                    <circle cx="26" cy="26" r="9" stroke="#E6F1FB" stroke-width="3" fill="none"/>
+                    <rect x="18" y="38" width="16" height="3" rx="1.5" fill="#B5D4F4"/>
+                    <rect x="21" y="43" width="10" height="3" rx="1.5" fill="#B5D4F4"/>
+                </svg>
+            </div>
+            <div class="nav-wordmark">
+                <span class="nav-name">nitmoi</span>
+                <span class="nav-tool">swiftform</span>
+            </div>
+        </a>
+        <div class="privacy-badge">
+            <div class="privacy-dot"></div>
+            <span class="privacy-text">your data never leaves your device</span>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>fill &amp; sign PDFs<br><span>without the subscription</span></h1>
+        <p>drag-and-drop text, draw your signature, export — done.</p>
+        <p class="hero-pledge">we don't see it. we don't store it. we don't sell it.</p>
+    </section>
+
+    <main class="workspace">
+        <div class="upload-zone fade-in" id="drop-zone">
+            <span class="upload-icon">📄</span>
+            <h3>click or drag a PDF here to start</h3>
+            <p>processed entirely in your browser — nothing is uploaded</p>
+            <input type="file" id="pdf-input" accept="application/pdf">
+        </div>
+
+        <div id="editor-container">
+            <div class="toolbar">
+                <button class="btn btn-outline" id="add-text-btn">T &nbsp;add text</button>
+                <button class="btn btn-outline" id="open-sig-btn">🖋️ &nbsp;add signature</button>
+                <button class="btn btn-primary" id="download-btn">↓ &nbsp;export PDF</button>
+            </div>
+            <div id="pdf-viewer-wrapper">
+                <div id="pdf-render-area">
+                    <div style="padding:80px 20px;text-align:center;color:#94a3b8;"><p>previewing document…</p></div>
+                </div>
+                <div class="annotation-layer" id="annotation-layer"></div>
+            </div>
+        </div>
+    </main>
+
+    <section class="features">
+        <div class="feature-card">
+            <h3>fill forms</h3>
+            <p>click anywhere on the document to add a text field. drag it into the perfect position.</p>
+        </div>
+        <div class="feature-card">
+            <h3>e-signatures</h3>
+            <p>draw your signature with a mouse or finger. resize and position it wherever you need.</p>
+        </div>
+        <div class="feature-card">
+            <h3>private by design</h3>
+            <p>your document never leaves your browser. built to fix a problem, not to harvest your data.</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-brand">nitmoi</div>
+        <div>necessity is the mother of invention</div>
+        <div>your data never leaves your device &nbsp;·&nbsp; no account &nbsp;·&nbsp; no tracking &nbsp;·&nbsp; no nonsense</div>
+    </footer>
+
+    <div class="modal" id="sig-modal">
+        <div class="modal-content">
+            <h2>create your signature</h2>
+            <p>sign below using your mouse or finger</p>
+            <canvas id="sig-canvas" width="400" height="180"></canvas>
+            <div style="display:flex;gap:8px;justify-content:center;">
+                <button class="btn btn-outline" id="clear-sig">clear</button>
+                <button class="btn btn-primary" id="save-sig">apply signature</button>
+                <button class="btn btn-outline" onclick="closeModal()">cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pdfInput        = document.getElementById('pdf-input');
+        const uploadZone      = document.getElementById('drop-zone');
+        const editorContainer = document.getElementById('editor-container');
+        const pdfRenderArea   = document.getElementById('pdf-render-area');
+        const annotationLayer = document.getElementById('annotation-layer');
+        const sigCanvas       = document.getElementById('sig-canvas');
+        const ctx             = sigCanvas.getContext('2d');
+        let isDrawing = false, lastX = 0, lastY = 0;
+
+        pdfInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                const fileURL = URL.createObjectURL(file);
+                uploadZone.style.display = 'none';
+                editorContainer.style.display = 'flex';
+                pdfRenderArea.innerHTML = `<object data="${fileURL}" type="application/pdf" width="100%" height="850px"><embed src="${fileURL}" type="application/pdf"/></object>`;
+                annotationLayer.style.height = '850px';
+                annotationLayer.style.pointerEvents = 'auto';
+            } else {
+                alert('please upload a valid PDF file.');
+            }
+        });
+
+        document.getElementById('add-text-btn').addEventListener('click', () => {
+            const el = document.createElement('div');
+            el.className = 'draggable-text';
+            el.contentEditable = true;
+            el.innerText = 'type here…';
+            el.style.top = '100px'; el.style.left = '100px';
+            makeDraggable(el);
+            annotationLayer.appendChild(el);
+            el.focus();
+        });
+
+        document.getElementById('open-sig-btn').addEventListener('click', () => {
+            document.getElementById('sig-modal').style.display = 'flex';
+            ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+        });
+
+        function closeModal() { document.getElementById('sig-modal').style.display = 'none'; }
+
+        function getPos(canvas, e) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: (e.clientX ?? e.touches[0].clientX) - rect.left, y: (e.clientY ?? e.touches[0].clientY) - rect.top };
+        }
+
+        sigCanvas.addEventListener('mousedown',  e => { isDrawing=true; const p=getPos(sigCanvas,e); [lastX,lastY]=[p.x,p.y]; });
+        sigCanvas.addEventListener('mousemove',  e => { if(!isDrawing) return; const p=getPos(sigCanvas,e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.strokeStyle='#042C53'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); [lastX,lastY]=[p.x,p.y]; });
+        window.addEventListener('mouseup',       () => isDrawing=false);
+        sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing=true; const p=getPos(sigCanvas,e); [lastX,lastY]=[p.x,p.y]; });
+        sigCanvas.addEventListener('touchmove',  e => { e.preventDefault(); if(!isDrawing) return; const p=getPos(sigCanvas,e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.strokeStyle='#042C53'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); [lastX,lastY]=[p.x,p.y]; });
+
+        document.getElementById('clear-sig').addEventListener('click', () => ctx.clearRect(0,0,sigCanvas.width,sigCanvas.height));
+
+        document.getElementById('save-sig').addEventListener('click', () => {
+            const img = document.createElement('img');
+            img.src = sigCanvas.toDataURL();
+            img.className = 'draggable-signature';
+            img.style.top = '150px'; img.style.left = '150px';
+            makeDraggable(img);
+            annotationLayer.appendChild(img);
+            closeModal();
+        });
+
+        function makeDraggable(el) {
+            let p1=0,p2=0,p3=0,p4=0;
+            el.onmousedown = function(e) {
+                if (e.target.contentEditable==='true' && e.target===document.activeElement) return;
+                e.preventDefault();
+                p3=e.clientX; p4=e.clientY;
+                document.onmouseup   = () => { document.onmouseup=null; document.onmousemove=null; };
+                document.onmousemove = function(e) { p1=p3-e.clientX; p2=p4-e.clientY; p3=e.clientX; p4=e.clientY; el.style.top=(el.offsetTop-p2)+'px'; el.style.left=(el.offsetLeft-p1)+'px'; };
+            };
+        }
+
+        document.getElementById('download-btn').addEventListener('click', () => window.print());
+    </script>
+</body>
+</html>

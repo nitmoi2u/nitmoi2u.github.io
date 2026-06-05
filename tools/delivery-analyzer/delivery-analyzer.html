@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>delivery analyzer | nitmoi</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        :root {
+            --blue-night: #042C53;
+            --blue-core:  #185FA5;
+            --blue-mid:   #378ADD;
+            --blue-sky:   #B5D4F4;
+            --blue-ice:   #E6F1FB;
+            --white:      #ffffff;
+            --text-main:  #1e293b;
+            --text-muted: #64748b;
+            --success-bg: #e8f8f1;
+            --success-tx: #0f6e56;
+            --danger-bg:  #fde8e8;
+            --danger-tx:  #a32d2d;
+            --info-bg:    #e6f1fb;
+            --info-tx:    #0c447c;
+            --radius:     12px;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+        body { background:var(--blue-ice); color:var(--text-main); min-height:100vh; }
+
+        nav {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:1rem 5%; background:var(--blue-night);
+            position:sticky; top:0; z-index:100;
+        }
+        .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .nav-logo { width:32px; height:32px; background:var(--blue-core); border-radius:8px; display:flex; align-items:center; justify-content:center; }
+        .nav-logo svg { width:20px; height:20px; }
+        .nav-wordmark { display:flex; flex-direction:column; line-height:1.1; }
+        .nav-name { font-size:1rem; font-weight:500; color:var(--blue-ice); letter-spacing:-0.01em; }
+        .nav-tool { font-size:0.7rem; color:var(--blue-sky); letter-spacing:0.02em; }
+        .privacy-badge { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(181,212,244,0.3); border-radius:999px; padding:5px 12px; }
+        .privacy-dot { width:7px; height:7px; border-radius:50%; background:var(--blue-mid); }
+        .privacy-text { font-size:0.72rem; color:var(--blue-sky); white-space:nowrap; }
+
+        .app-shell { max-width:480px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+
+        .tab-row { display:flex; gap:6px; margin-bottom:1.25rem; }
+        .tab { flex:1; padding:8px 4px; text-align:center; font-size:0.8rem; font-weight:500; border:1px solid var(--blue-sky); border-radius:8px; cursor:pointer; color:var(--blue-core); background:var(--white); transition:all 0.15s; }
+        .tab.active { background:var(--blue-core); color:var(--white); border-color:var(--blue-core); }
+
+        .card { background:var(--white); border:1px solid var(--blue-sky); border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+        .section-label { font-size:0.7rem; font-weight:500; text-transform:uppercase; letter-spacing:0.07em; color:var(--blue-core); margin-bottom:10px; }
+
+        .input-row { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+        .input-row label { font-size:0.82rem; color:var(--text-muted); }
+        .input-row input { width:100%; padding:9px 12px; border:1px solid var(--blue-sky); border-radius:8px; font-size:1rem; background:var(--blue-ice); color:var(--text-main); transition:border-color 0.15s; }
+        .input-row input:focus { outline:none; border-color:var(--blue-core); background:var(--white); }
+
+        .result-box { border-radius:8px; padding:10px 14px; margin-top:8px; font-size:0.9rem; font-weight:500; display:none; }
+        .result-owe  { background:var(--danger-bg); color:var(--danger-tx); }
+        .result-owed { background:var(--success-bg); color:var(--success-tx); }
+        .result-card { background:var(--info-bg); color:var(--info-tx); }
+
+        .tip-box { background:var(--blue-ice); border:1px solid var(--blue-sky); border-radius:8px; padding:10px 14px; margin-top:8px; display:none; }
+        .tip-generous { color:#0f6e56; font-weight:500; }
+        .tip-solid    { color:var(--blue-core); font-weight:500; }
+        .tip-standard { color:var(--text-muted); }
+
+        .toggle-row { display:flex; gap:0; margin-bottom:12px; border:1px solid var(--blue-sky); border-radius:8px; overflow:hidden; }
+        .toggle-opt { flex:1; padding:9px; text-align:center; font-size:0.9rem; font-weight:500; cursor:pointer; background:var(--blue-ice); color:var(--text-muted); transition:all 0.15s; border:none; }
+        .toggle-opt.active { background:var(--blue-core); color:var(--white); }
+
+        .stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:1rem; }
+        .stat { background:var(--white); border:1px solid var(--blue-sky); border-radius:8px; padding:10px 12px; }
+        .stat-label { font-size:0.75rem; color:var(--text-muted); margin-bottom:3px; }
+        .stat-value { font-size:1.3rem; font-weight:500; color:var(--blue-night); }
+
+        .delivery-list { display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto; }
+        .delivery-item { display:flex; justify-content:space-between; align-items:center; padding:9px 11px; background:var(--blue-ice); border-radius:8px; font-size:0.82rem; }
+
+        .btn-row { display:flex; gap:8px; }
+        .btn { flex:1; padding:10px 8px; background:var(--white); border:1px solid var(--blue-sky); border-radius:8px; font-size:0.875rem; font-weight:500; color:var(--blue-night); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.15s; }
+        .btn:hover { background:var(--blue-ice); border-color:var(--blue-core); }
+        .btn-primary { background:var(--blue-core); color:var(--white); border-color:var(--blue-core); }
+        .btn-primary:hover { background:var(--blue-night); border-color:var(--blue-night); }
+        .btn-full { width:100%; flex:none; }
+
+        .history-shift { padding:12px 0; border-top:1px solid var(--blue-sky); }
+        .history-shift:first-child { border-top:none; padding-top:0; }
+        .badge { display:inline-block; font-size:0.75rem; padding:2px 8px; border-radius:999px; font-weight:500; }
+        .badge-success { background:var(--success-bg); color:var(--success-tx); }
+        .badge-danger  { background:var(--danger-bg);  color:var(--danger-tx); }
+
+        .data-btn { width:100%; padding:11px; background:var(--white); border:1px solid var(--blue-sky); border-radius:8px; font-size:0.875rem; font-weight:500; color:var(--blue-night); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px; transition:all 0.15s; }
+        .data-btn:hover { background:var(--blue-ice); border-color:var(--blue-core); }
+        .data-note { font-size:0.78rem; color:var(--text-muted); text-align:center; line-height:1.6; margin-top:2px; }
+        #file-input { display:none; }
+
+        .divider { border:none; border-top:1px solid var(--blue-sky); margin:10px 0; }
+        .empty-state { text-align:center; padding:1.5rem 0; color:var(--text-muted); font-size:0.875rem; }
+        .empty-icon { font-size:1.8rem; display:block; margin-bottom:8px; }
+
+        .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--blue-night); color:var(--blue-ice); padding:9px 18px; border-radius:999px; font-size:0.82rem; font-weight:500; opacity:0; transition:opacity 0.25s; pointer-events:none; z-index:999; white-space:nowrap; }
+        .toast.show { opacity:1; }
+
+        footer { background:var(--blue-night); color:var(--blue-sky); text-align:center; padding:1.5rem 5%; font-size:0.78rem; line-height:1.9; margin-top:2rem; }
+        footer .footer-brand { font-weight:500; color:var(--blue-ice); }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a class="nav-brand" href="#">
+            <div class="nav-logo">
+                <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="24" y="8" width="4" height="14" rx="2" fill="#E6F1FB"/>
+                    <circle cx="26" cy="26" r="9" stroke="#E6F1FB" stroke-width="3" fill="none"/>
+                    <rect x="18" y="38" width="16" height="3" rx="1.5" fill="#B5D4F4"/>
+                    <rect x="21" y="43" width="10" height="3" rx="1.5" fill="#B5D4F4"/>
+                </svg>
+            </div>
+            <div class="nav-wordmark">
+                <span class="nav-name">nitmoi</span>
+                <span class="nav-tool">delivery analyzer</span>
+            </div>
+        </a>
+        <div class="privacy-badge">
+            <div class="privacy-dot"></div>
+            <span class="privacy-text">your data never leaves your device</span>
+        </div>
+    </nav>
+
+    <div class="app-shell">
+        <div class="tab-row">
+            <div class="tab active" id="tab-log"     onclick="switchTab('log')">log</div>
+            <div class="tab"        id="tab-shift"   onclick="switchTab('shift')">shift</div>
+            <div class="tab"        id="tab-history" onclick="switchTab('history')">history</div>
+            <div class="tab"        id="tab-data"    onclick="switchTab('data')">data</div>
+        </div>
+
+        <div id="view-log">
+            <div class="card">
+                <div class="section-label">log delivery</div>
+                <div class="input-row">
+                    <label>order cost (charged to customer)</label>
+                    <input type="number" id="cost" placeholder="e.g. 12.50" step="0.01" min="0">
+                </div>
+                <div class="input-row">
+                    <label>payment type</label>
+                    <div class="toggle-row">
+                        <div class="toggle-opt active" id="opt-cash" onclick="setPaymentType('cash')">cash</div>
+                        <div class="toggle-opt" id="opt-card" onclick="setPaymentType('card')">card</div>
+                    </div>
+                </div>
+                <div class="input-row" id="row-cash">
+                    <label>cash received from customer</label>
+                    <input type="number" id="cash" placeholder="e.g. 15.00" step="0.01" min="0">
+                </div>
+                <div class="input-row" id="row-card-tip" style="display:none;">
+                    <label>tip received (card tip, optional)</label>
+                    <input type="number" id="card-tip" placeholder="e.g. 2.00 — leave blank if none" step="0.01" min="0">
+                </div>
+                <div class="input-row">
+                    <label>your delivery charge</label>
+                    <input type="number" id="charge" placeholder="e.g. 3.50" step="0.01" min="0">
+                </div>
+                <div id="result-box" class="result-box"></div>
+                <div id="tip-box" class="tip-box">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:500;color:var(--blue-night);" id="tip-amount"></div>
+                            <div style="font-size:0.78rem;margin-top:2px;" id="tip-label"></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:1.1rem;font-weight:500;color:var(--blue-night);" id="tip-pct"></div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);">tip rate</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <button class="btn btn-primary btn-full" onclick="logDelivery()">+ add to shift</button>
+            </div>
+        </div>
+
+        <div id="view-shift" style="display:none;">
+            <div class="stat-grid">
+                <div class="stat"><div class="stat-label">deliveries</div><div class="stat-value" id="s-count">0</div></div>
+                <div class="stat"><div class="stat-label">total tips</div><div class="stat-value" id="s-tips">£0.00</div></div>
+                <div class="stat"><div class="stat-label">avg tip</div><div class="stat-value" id="s-avg-tip">—</div></div>
+                <div class="stat"><div class="stat-label">avg tip rate</div><div class="stat-value" id="s-avg-pct">—</div></div>
+            </div>
+            <div class="card">
+                <div class="section-label">cash settlement</div>
+                <div id="s-settlement" style="font-size:0.9rem;color:var(--text-muted);">no deliveries yet.</div>
+            </div>
+            <div class="card">
+                <div class="section-label">deliveries this shift</div>
+                <div class="delivery-list" id="delivery-list">
+                    <div class="empty-state"><span class="empty-icon">🛵</span>nothing logged yet</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="section-label">name this shift <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+                <input type="text" id="shift-name" placeholder="e.g. friday night, bank holiday, saturday lunch…" maxlength="60" style="width:100%;padding:9px 12px;border:1px solid var(--blue-sky);border-radius:8px;font-size:0.95rem;background:var(--blue-ice);color:var(--text-main);outline:none;" onfocus="this.style.borderColor='var(--blue-core)';this.style.background='var(--white)'" onblur="this.style.borderColor='var(--blue-sky)';this.style.background='var(--blue-ice)'">
+            </div>
+            <div class="btn-row">
+                <button class="btn" onclick="switchTab('log')">+ add delivery</button>
+                <button class="btn btn-primary" onclick="endShift()">⚑ end shift</button>
+            </div>
+        </div>
+
+        <div id="view-history" style="display:none;">
+            <div class="stat-grid" id="all-time-stats" style="display:none;">
+                <div class="stat"><div class="stat-label">total shifts</div><div class="stat-value" id="ht-shifts">0</div></div>
+                <div class="stat"><div class="stat-label">all-time tips</div><div class="stat-value" id="ht-tips">£0</div></div>
+                <div class="stat"><div class="stat-label">best shift</div><div class="stat-value" id="ht-best">—</div></div>
+                <div class="stat"><div class="stat-label">avg per shift</div><div class="stat-value" id="ht-avg">—</div></div>
+            </div>
+            <div class="card">
+                <div class="section-label">shift history</div>
+                <div id="history-list">
+                    <div class="empty-state"><span class="empty-icon">📋</span>no shifts saved yet</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-data" style="display:none;">
+            <div class="card">
+                <div class="section-label">export</div>
+                <button class="data-btn" onclick="exportJSON()">↓ &nbsp;save backup as JSON</button>
+                <p class="data-note">downloads all your shifts and current session. use this to back up your data or transfer to a new device.</p>
+            </div>
+            <div class="card">
+                <div class="section-label">import</div>
+                <button class="data-btn" onclick="document.getElementById('file-input').click()">↑ &nbsp;load from JSON file</button>
+                <input type="file" id="file-input" accept=".json" onchange="importJSON(event)">
+                <p class="data-note">select a previously exported JSON file. your existing data will be preserved — no duplicates.</p>
+            </div>
+            <div class="card">
+                <div class="section-label">storage info</div>
+                <div id="storage-info" style="font-size:0.82rem;color:var(--text-muted);line-height:1.9;"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-brand">nitmoi</div>
+        <div>necessity is the mother of invention</div>
+        <div>your data never leaves your device &nbsp;·&nbsp; no account &nbsp;·&nbsp; no tracking &nbsp;·&nbsp; no nonsense</div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let deliveries = JSON.parse(localStorage.getItem('da_deliveries') || '[]');
+        let history    = JSON.parse(localStorage.getItem('da_history')    || '[]');
+
+        function save() {
+            localStorage.setItem('da_deliveries', JSON.stringify(deliveries));
+            localStorage.setItem('da_history',    JSON.stringify(history));
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        function tipInfo(pct) {
+            if (pct >= 15) return ['generous tip!', 'tip-generous'];
+            if (pct >= 8)  return ['solid tip',      'tip-solid'];
+            return             ['standard tip',       'tip-standard'];
+        }
+
+        let paymentType = 'cash';
+
+        function setPaymentType(type) {
+            paymentType = type;
+            document.getElementById('opt-cash').classList.toggle('active', type==='cash');
+            document.getElementById('opt-card').classList.toggle('active', type==='card');
+            document.getElementById('row-cash').style.display     = type==='cash' ? 'flex' : 'none';
+            document.getElementById('row-card-tip').style.display = type==='card' ? 'flex' : 'none';
+            document.getElementById('cash').value     = '';
+            document.getElementById('card-tip').value = '';
+            previewResult();
+        }
+
+        ['cost','cash','card-tip','charge'].forEach(id =>
+            document.getElementById(id).addEventListener('input', previewResult)
+        );
+
+        function previewResult() {
+            const cost   = parseFloat(document.getElementById('cost').value);
+            const charge = parseFloat(document.getElementById('charge').value);
+            const rb = document.getElementById('result-box');
+            const tb = document.getElementById('tip-box');
+            rb.style.display = 'none';
+            tb.style.display = 'none';
+            if (!cost || !charge) return;
+
+            if (paymentType === 'cash') {
+                const cashStr = document.getElementById('cash').value;
+                const cashVal = cashStr && !isNaN(parseFloat(cashStr)) ? parseFloat(cashStr) : null;
+                // What you owe the restaurant = order cost minus your delivery charge
+                const owedToRestaurant = cost - charge;
+                rb.style.display = 'block';
+                rb.className = 'result-box result-owe';
+                rb.textContent = 'you owe restaurant: £' + owedToRestaurant.toFixed(2);
+                // Tip = anything the customer paid above the order cost
+                if (cashVal !== null) {
+                    const tip = cashVal - cost;
+                    if (tip > 0.005) {
+                        const pct = tip / cost * 100;
+                        const [lbl, cls] = tipInfo(pct);
+                        tb.style.display = 'block';
+                        document.getElementById('tip-amount').textContent = '£' + tip.toFixed(2) + ' tip';
+                        document.getElementById('tip-pct').textContent    = pct.toFixed(1) + '%';
+                        const tl = document.getElementById('tip-label');
+                        tl.textContent = lbl; tl.className = cls;
+                    }
+                }
+            } else {
+                // Card — restaurant owes you the delivery charge
+                const cardTipStr = document.getElementById('card-tip').value;
+                const cardTip    = cardTipStr && !isNaN(parseFloat(cardTipStr)) ? parseFloat(cardTipStr) : 0;
+                rb.style.display = 'block';
+                rb.className     = 'result-box result-owed';
+                rb.textContent   = 'restaurant owes you: £' + charge.toFixed(2);
+                if (cardTip > 0) {
+                    const pct = cardTip / cost * 100;
+                    const [lbl, cls] = tipInfo(pct);
+                    tb.style.display = 'block';
+                    document.getElementById('tip-amount').textContent = '£' + cardTip.toFixed(2) + ' tip';
+                    document.getElementById('tip-pct').textContent    = pct.toFixed(1) + '%';
+                    const tl = document.getElementById('tip-label');
+                    tl.textContent = lbl; tl.className = cls;
+                }
+            }
+        }
+
+        function logDelivery() {
+            const cost   = parseFloat(document.getElementById('cost').value);
+            const charge = parseFloat(document.getElementById('charge').value);
+            if (!cost || isNaN(cost) || !charge || isNaN(charge)) { showToast('enter order cost and your charge'); return; }
+            let tip = 0, tipPct = 0, settlement = 0, cashVal = null;
+            if (paymentType === 'cash') {
+                const cashStr = document.getElementById('cash').value;
+                cashVal    = cashStr && !isNaN(parseFloat(cashStr)) ? parseFloat(cashStr) : null;
+                tip        = cashVal !== null ? Math.max(0, cashVal - cost) : 0;
+                tipPct     = tip > 0 ? tip / cost * 100 : 0;
+                settlement = -(cost - charge); // negative = you owe restaurant (order cost minus your charge)
+            } else {
+                const cardTipStr = document.getElementById('card-tip').value;
+                tip        = cardTipStr && !isNaN(parseFloat(cardTipStr)) ? parseFloat(cardTipStr) : 0;
+                tipPct     = tip > 0 ? tip / cost * 100 : 0;
+                settlement = charge; // positive = restaurant owes you the delivery charge
+            }
+            deliveries.push({ cost, cash:cashVal, charge, tip, tipPct, settlement, isCash: paymentType==='cash',
+                time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),
+                ts: Date.now() });
+            save();
+            ['cost','cash','card-tip','charge'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('result-box').style.display = 'none';
+            document.getElementById('tip-box').style.display    = 'none';
+            showToast('delivery added');
+            switchTab('shift');
+        }
+
+        function renderShift() {
+            const count = deliveries.length;
+            document.getElementById('s-count').textContent = count;
+            const list = document.getElementById('delivery-list');
+            if (count === 0) {
+                document.getElementById('s-tips').textContent    = '£0.00';
+                document.getElementById('s-avg-tip').textContent = '—';
+                document.getElementById('s-avg-pct').textContent = '—';
+                document.getElementById('s-settlement').textContent = 'no deliveries yet.';
+                list.innerHTML = '<div class="empty-state"><span class="empty-icon">🛵</span>nothing logged yet</div>';
+                return;
+            }
+            const totalTips = deliveries.reduce((a,d) => a+d.tip, 0);
+            const tipped    = deliveries.filter(d => d.tip > 0);
+            const avgTip    = tipped.length ? totalTips / tipped.length : 0;
+            const avgPct    = tipped.length ? tipped.reduce((a,d) => a+d.tipPct,0) / tipped.length : 0;
+            const totalSett = deliveries.filter(d => d.isCash).reduce((a,d) => a+d.settlement, 0);
+            document.getElementById('s-tips').textContent    = '£'+totalTips.toFixed(2);
+            document.getElementById('s-avg-tip').textContent = avgTip > 0 ? '£'+avgTip.toFixed(2) : '—';
+            document.getElementById('s-avg-pct').textContent = avgPct > 0 ? avgPct.toFixed(1)+'%' : '—';
+            const sEl = document.getElementById('s-settlement');
+            const cashOwed  = deliveries.filter(d => d.isCash).reduce((a,d) => a + (d.cost - d.charge), 0);
+            const cardOwed  = deliveries.filter(d => !d.isCash).reduce((a,d) => a + d.charge, 0);
+            const cashCount = deliveries.filter(d => d.isCash).length;
+            const cardCount = deliveries.filter(d => !d.isCash).length;
+            const net       = cardOwed - cashOwed;
+            let settlementHTML = '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;line-height:1.8;">';
+            if (cashCount > 0) settlementHTML += `cash deliveries: you hold <strong>£${cashOwed.toFixed(2)}</strong> to hand back (${cashCount} ${cashCount===1?'delivery':'deliveries'})<br>`;
+            if (cardCount > 0) settlementHTML += `card deliveries: restaurant owes you <strong>£${cardOwed.toFixed(2)}</strong> in charges (${cardCount} ${cardCount===1?'delivery':'deliveries'})<br>`;
+            settlementHTML += '</div>';
+            if (cashCount === 0 && cardCount === 0) {
+                settlementHTML = '<span style="color:var(--text-muted)">no deliveries yet.</span>';
+            } else if (Math.abs(net) < 0.005) {
+                settlementHTML += `<div style="font-weight:500;color:var(--success-tx);">all square — nothing owed either way</div>`;
+            } else if (net > 0) {
+                settlementHTML += `<div style="font-weight:500;color:var(--success-tx);">net: restaurant owes you <strong>£${net.toFixed(2)}</strong></div>`;
+            } else {
+                settlementHTML += `<div style="font-weight:500;color:var(--danger-tx);">net: you owe restaurant <strong>£${Math.abs(net).toFixed(2)}</strong></div>`;
+            }
+            sEl.innerHTML = settlementHTML;
+            list.innerHTML = deliveries.map((d,i) => {
+                const [lbl,cls] = d.tip > 0 ? tipInfo(d.tipPct) : ['no tip','tip-standard'];
+                return `<div class="delivery-item">
+                    <div>
+                        <div style="font-weight:500;">delivery ${i+1} <span style="font-size:0.75rem;color:var(--text-muted);">· ${d.time}</span></div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${d.isCash?'cash':'card'} · £${d.cost.toFixed(2)} order · £${d.charge.toFixed(2)} charge</div>
+                    </div>
+                    <div style="text-align:right;">
+                        ${d.tip > 0
+                            ? `<div style="font-weight:500;" class="${cls}">+£${d.tip.toFixed(2)}</div><div style="font-size:0.72rem;color:var(--text-muted);">${d.tipPct.toFixed(1)}% · ${lbl}</div>`
+                            : `<div style="font-size:0.78rem;color:var(--text-muted);">no tip</div>`}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function endShift() {
+            if (deliveries.length === 0) { showToast('no deliveries to save'); return; }
+            const totalTips   = deliveries.reduce((a,d) => a+d.tip, 0);
+            const totalEarned = deliveries.reduce((a,d) => a+d.charge, 0);
+            const settlement  = deliveries.filter(d => d.isCash).reduce((a,d) => a+d.settlement, 0);
+            const tipped      = deliveries.filter(d => d.tip > 0);
+            const avgTipPct   = tipped.length ? tipped.reduce((a,d) => a+d.tipPct,0)/tipped.length : 0;
+            const nameInput   = document.getElementById('shift-name');
+            const shiftName   = nameInput.value.trim();
+            history.unshift({ date:new Date().toLocaleDateString('en-GB'), name:shiftName, count:deliveries.length,
+                totalEarned, totalTips, settlement, avgTipPct, ts:Date.now() });
+            deliveries = [];
+            nameInput.value = '';
+            save();
+            showToast('shift saved');
+            switchTab('history');
+        }
+
+        function renderHistory() {
+            const el      = document.getElementById('history-list');
+            const statsEl = document.getElementById('all-time-stats');
+            if (history.length === 0) {
+                statsEl.style.display = 'none';
+                el.innerHTML = '<div class="empty-state"><span class="empty-icon">📋</span>no shifts saved yet</div>';
+                return;
+            }
+            statsEl.style.display = 'grid';
+            const allTips   = history.reduce((a,s) => a+s.totalTips, 0);
+            const allEarned = history.reduce((a,s) => a+s.totalEarned, 0);
+            const best      = Math.max(...history.map(s => s.totalEarned+s.totalTips));
+            document.getElementById('ht-shifts').textContent = history.length;
+            document.getElementById('ht-tips').textContent   = '£'+allTips.toFixed(0);
+            document.getElementById('ht-best').textContent   = '£'+best.toFixed(0);
+            document.getElementById('ht-avg').textContent    = '£'+((allEarned+allTips)/history.length).toFixed(0);
+            el.innerHTML = history.map(s => {
+                const gross = s.totalEarned + s.totalTips;
+                return `<div class="history-shift">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${s.name?'2px':'6px'};">
+                        <span style="font-weight:500;">${s.name || s.date}</span>
+                        <span style="font-size:0.78rem;color:var(--text-muted);">${s.count} ${s.count===1?'delivery':'deliveries'}</span>
+                    </div>
+                    ${s.name ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;">${s.date}</div>` : ''}
+                    <div class="stat-grid" style="gap:6px;">
+                        <div class="stat"><div class="stat-label">earnings</div><div class="stat-value" style="font-size:1rem;">£${s.totalEarned.toFixed(2)}</div></div>
+                        <div class="stat"><div class="stat-label">tips</div><div class="stat-value" style="font-size:1rem;">£${s.totalTips.toFixed(2)}</div></div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+                        <span style="font-size:0.78rem;color:var(--text-muted);">gross: £${gross.toFixed(2)}</span>
+                        ${s.avgTipPct > 0 ? `<span style="font-size:0.78rem;color:var(--text-muted);">· avg tip ${s.avgTipPct.toFixed(1)}%</span>` : ''}
+                        ${Math.abs(s.settlement) > 0.005 ? `<span class="badge ${s.settlement>0?'badge-success':'badge-danger'}">${s.settlement>0?'+':''}£${s.settlement.toFixed(2)}</span>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderDataTab() {
+            const shiftCount    = history.length;
+            const deliveryCount = history.reduce((a,s)=>a+s.count,0) + deliveries.length;
+            const oldest        = history.length ? history[history.length-1].date : 'n/a';
+            document.getElementById('storage-info').innerHTML =
+                `shifts saved: <strong>${shiftCount}</strong><br>
+                 total deliveries tracked: <strong>${deliveryCount}</strong><br>
+                 data from: <strong>${oldest}</strong><br>
+                 storage: <strong>local only — never uploaded</strong>`;
+        }
+
+        function exportJSON() {
+            const data = { version:1, exported:new Date().toISOString(), history, currentShift:deliveries };
+            const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href = url;
+            a.download = 'delivery-analyzer-'+new Date().toISOString().slice(0,10)+'.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('backup saved');
+        }
+
+        function importJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (!data.version || !Array.isArray(data.history)) { showToast('invalid backup file'); return; }
+                    const existingTs = new Set(history.map(s=>s.ts));
+                    const newShifts  = data.history.filter(s=>!existingTs.has(s.ts));
+                    history = [...history, ...newShifts].sort((a,b)=>b.ts-a.ts);
+                    if (data.currentShift?.length && deliveries.length===0) deliveries = data.currentShift;
+                    save();
+                    showToast(newShifts.length+' shift(s) imported');
+                    renderHistory();
+                    renderDataTab();
+                } catch(err) { showToast('could not read file'); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        function switchTab(t) {
+            ['log','shift','history','data'].forEach(n => {
+                document.getElementById('view-'+n).style.display = n===t ? 'block' : 'none';
+                document.getElementById('tab-'+n).classList.toggle('active', n===t);
+            });
+            if (t==='shift')   renderShift();
+            if (t==='history') renderHistory();
+            if (t==='data')    renderDataTab();
+        }
+    </script>
+</body>
+</html>

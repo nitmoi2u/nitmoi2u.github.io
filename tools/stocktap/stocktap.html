@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>stocktap | nitmoi</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        :root {
+            --blue-night: #042C53;
+            --blue-core:  #185FA5;
+            --blue-mid:   #378ADD;
+            --blue-sky:   #B5D4F4;
+            --blue-ice:   #E6F1FB;
+            --white:      #ffffff;
+            --text-main:  #1e293b;
+            --text-muted: #64748b;
+            --success-bg: #e8f8f1;
+            --success-tx: #0f6e56;
+            --danger-bg:  #fde8e8;
+            --danger-tx:  #a32d2d;
+            --warn-bg:    #fef9e7;
+            --warn-tx:    #854f0b;
+            --radius:     12px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+        body { background:var(--blue-ice); color:var(--text-main); min-height:100vh; }
+
+        nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 5%; background:var(--blue-night); position:sticky; top:0; z-index:100; }
+        .nav-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .nav-logo { width:32px; height:32px; background:var(--blue-core); border-radius:8px; display:flex; align-items:center; justify-content:center; }
+        .nav-logo svg { width:20px; height:20px; }
+        .nav-wordmark { display:flex; flex-direction:column; line-height:1.1; }
+        .nav-name { font-size:1rem; font-weight:500; color:var(--blue-ice); letter-spacing:-0.01em; }
+        .nav-tool { font-size:0.7rem; color:var(--blue-sky); letter-spacing:0.02em; }
+        .privacy-badge { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(181,212,244,0.3); border-radius:999px; padding:5px 12px; }
+        .privacy-dot { width:7px; height:7px; border-radius:50%; background:var(--blue-mid); }
+        .privacy-text { font-size:0.72rem; color:var(--blue-sky); white-space:nowrap; }
+
+        .app-shell { max-width:480px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+
+        .tab-row { display:flex; gap:6px; margin-bottom:1.25rem; }
+        .tab { flex:1; padding:8px 4px; text-align:center; font-size:0.8rem; font-weight:500; border:1px solid var(--blue-sky); border-radius:8px; cursor:pointer; color:var(--blue-core); background:var(--white); transition:all 0.15s; }
+        .tab.active { background:var(--blue-core); color:var(--white); border-color:var(--blue-core); }
+
+        .card { background:var(--white); border:1px solid var(--blue-sky); border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+        .section-label { font-size:0.7rem; font-weight:500; text-transform:uppercase; letter-spacing:0.07em; color:var(--blue-core); margin-bottom:10px; }
+
+        .input-row { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+        .input-row label { font-size:0.82rem; color:var(--text-muted); }
+        input[type=text], input[type=number], select { width:100%; padding:9px 12px; border:1px solid var(--blue-sky); border-radius:8px; font-size:1rem; background:var(--blue-ice); color:var(--text-main); transition:border-color 0.15s; -webkit-appearance:none; appearance:none; }
+        input:focus, select:focus { outline:none; border-color:var(--blue-core); background:var(--white); }
+
+        .btn { padding:10px 14px; background:var(--white); border:1px solid var(--blue-sky); border-radius:8px; font-size:0.875rem; font-weight:500; color:var(--blue-night); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all 0.15s; }
+        .btn:hover { background:var(--blue-ice); border-color:var(--blue-core); }
+        .btn-primary { background:var(--blue-core); color:var(--white); border-color:var(--blue-core); }
+        .btn-primary:hover { background:var(--blue-night); border-color:var(--blue-night); }
+        .btn-full { width:100%; }
+        .btn-row { display:flex; gap:8px; }
+        .btn-sm { padding:6px 10px; font-size:0.78rem; }
+
+        .scan-zone { border:2px dashed var(--blue-sky); border-radius:var(--radius); padding:1.5rem; text-align:center; background:var(--white); margin-bottom:1rem; transition:all 0.2s; }
+        .scan-icon { font-size:2.2rem; display:block; margin-bottom:0.5rem; }
+        .scan-zone h3 { font-size:1rem; font-weight:500; color:var(--blue-night); margin-bottom:4px; }
+        .scan-zone p { font-size:0.82rem; color:var(--text-muted); }
+        .barcode-input-row { display:flex; gap:8px; margin-top:12px; }
+        .barcode-input-row input { flex:1; }
+
+        .product-card { background:var(--blue-ice); border:1px solid var(--blue-sky); border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1rem; display:none; }
+        .product-card.visible { display:block; }
+        .product-name { font-size:1.05rem; font-weight:500; color:var(--blue-night); margin-bottom:2px; }
+        .product-meta { font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; }
+        .product-meta span { display:inline-block; margin-right:10px; }
+        .qty-row { display:flex; align-items:center; gap:10px; }
+        .qty-btn { width:38px; height:38px; border:1px solid var(--blue-sky); border-radius:8px; background:var(--white); font-size:1.2rem; font-weight:500; color:var(--blue-night); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .qty-btn:hover { background:var(--blue-ice); border-color:var(--blue-core); }
+        .qty-display { font-size:1.5rem; font-weight:500; color:var(--blue-night); min-width:48px; text-align:center; }
+        .qty-unit { font-size:0.82rem; color:var(--text-muted); }
+        .cache-badge { display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; padding:3px 8px; border-radius:999px; }
+        .cache-hit  { background:var(--success-bg); color:var(--success-tx); }
+        .cache-miss { background:var(--warn-bg); color:var(--warn-tx); }
+
+        .stock-list { display:flex; flex-direction:column; gap:8px; }
+        .stock-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--blue-ice); border-radius:8px; font-size:0.85rem; }
+        .stock-item-name { font-weight:500; color:var(--blue-night); }
+        .stock-item-meta { font-size:0.75rem; color:var(--text-muted); margin-top:1px; }
+        .stock-qty { font-size:1.1rem; font-weight:500; color:var(--blue-core); text-align:right; white-space:nowrap; }
+        .stock-qty-unit { font-size:0.72rem; color:var(--text-muted); }
+
+        .stat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:1rem; }
+        .stat { background:var(--white); border:1px solid var(--blue-sky); border-radius:8px; padding:10px 12px; }
+        .stat-label { font-size:0.75rem; color:var(--text-muted); margin-bottom:3px; }
+        .stat-value { font-size:1.3rem; font-weight:500; color:var(--blue-night); }
+
+        .count-record { padding:12px 0; border-top:1px solid var(--blue-sky); }
+        .count-record:first-child { border-top:none; padding-top:0; }
+
+        .cat-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+        .cat-pill { padding:5px 12px; border:1px solid var(--blue-sky); border-radius:999px; font-size:0.78rem; cursor:pointer; background:var(--white); color:var(--text-muted); transition:all 0.15s; }
+        .cat-pill.active { background:var(--blue-core); color:var(--white); border-color:var(--blue-core); }
+
+        .empty-state { text-align:center; padding:2rem 0; color:var(--text-muted); font-size:0.875rem; }
+        .empty-icon { font-size:2rem; display:block; margin-bottom:8px; }
+
+        .divider { border:none; border-top:1px solid var(--blue-sky); margin:12px 0; }
+
+        .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--blue-night); color:var(--blue-ice); padding:9px 18px; border-radius:999px; font-size:0.82rem; font-weight:500; opacity:0; transition:opacity 0.25s; pointer-events:none; z-index:999; white-space:nowrap; }
+        .toast.show { opacity:1; }
+
+        footer { background:var(--blue-night); color:var(--blue-sky); text-align:center; padding:1.5rem 5%; font-size:0.78rem; line-height:1.9; margin-top:2rem; }
+        footer .footer-brand { font-weight:500; color:var(--blue-ice); }
+
+        .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--blue-sky); border-top-color:var(--blue-core); border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-brand" href="#">
+        <div class="nav-logo">
+            <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="24" y="8" width="4" height="14" rx="2" fill="#E6F1FB"/>
+                <circle cx="26" cy="26" r="9" stroke="#E6F1FB" stroke-width="3" fill="none"/>
+                <rect x="18" y="38" width="16" height="3" rx="1.5" fill="#B5D4F4"/>
+                <rect x="21" y="43" width="10" height="3" rx="1.5" fill="#B5D4F4"/>
+            </svg>
+        </div>
+        <div class="nav-wordmark">
+            <span class="nav-name">nitmoi</span>
+            <span class="nav-tool">stocktap</span>
+        </div>
+    </a>
+    <div class="privacy-badge">
+        <div class="privacy-dot"></div>
+        <span class="privacy-text">your data never leaves your device</span>
+    </div>
+</nav>
+
+<div class="app-shell">
+
+    <div class="tab-row">
+        <div class="tab active" id="tab-scan"    onclick="switchTab('scan')">scan</div>
+        <div class="tab"        id="tab-count"   onclick="switchTab('count')">count</div>
+        <div class="tab"        id="tab-history" onclick="switchTab('history')">history</div>
+        <div class="tab"        id="tab-cache"   onclick="switchTab('cache')">products</div>
+    </div>
+
+    <!-- SCAN -->
+    <div id="view-scan">
+        <div class="scan-zone" id="scan-zone">
+            <span class="scan-icon">📷</span>
+            <h3>scan or enter barcode</h3>
+            <p>point camera at barcode, or type it below</p>
+            <div class="barcode-input-row">
+                <input type="text" id="barcode-input" placeholder="e.g. 5000267024554" inputmode="numeric">
+                <button class="btn btn-primary" onclick="lookupBarcode()">look up</button>
+            </div>
+        </div>
+
+        <div class="product-card" id="product-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                <div class="product-name" id="pc-name">—</div>
+                <span class="cache-badge" id="pc-cache-badge"></span>
+            </div>
+            <div class="product-meta">
+                <span id="pc-brand"></span>
+                <span id="pc-size"></span>
+                <span id="pc-cat"></span>
+            </div>
+            <div class="divider"></div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;">quantity in stock</div>
+            <div class="qty-row">
+                <button class="qty-btn" onclick="adjustQty(-1)">−</button>
+                <div class="qty-display" id="qty-display">1</div>
+                <button class="qty-btn" onclick="adjustQty(1)">+</button>
+                <div class="qty-unit" id="qty-unit"></div>
+            </div>
+            <div class="divider"></div>
+            <div class="btn-row">
+                <button class="btn btn-full" onclick="clearScan()">cancel</button>
+                <button class="btn btn-primary btn-full" onclick="addToCount()">+ add to count</button>
+            </div>
+        </div>
+
+        <div class="card" id="manual-card" style="display:none;">
+            <div class="section-label">product not found — add manually</div>
+            <div class="input-row"><label>product name</label><input type="text" id="m-name" placeholder="e.g. Guinness Draught 440ml"></div>
+            <div class="input-row"><label>brand</label><input type="text" id="m-brand" placeholder="e.g. Guinness"></div>
+            <div class="input-row"><label>size / unit</label><input type="text" id="m-size" placeholder="e.g. 440ml, 70cl, 1L"></div>
+            <div class="input-row">
+                <label>category</label>
+                <select id="m-cat">
+                    <option value="beer">beer</option>
+                    <option value="wine">wine</option>
+                    <option value="spirits">spirits</option>
+                    <option value="soft drink">soft drink</option>
+                    <option value="food">food</option>
+                    <option value="other">other</option>
+                </select>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-full" onclick="cancelManual()">cancel</button>
+                <button class="btn btn-primary btn-full" onclick="saveManual()">save &amp; add to count</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COUNT -->
+    <div id="view-count" style="display:none;">
+        <div class="stat-grid">
+            <div class="stat"><div class="stat-label">items scanned</div><div class="stat-value" id="c-items">0</div></div>
+            <div class="stat"><div class="stat-label">total units</div><div class="stat-value" id="c-units">0</div></div>
+        </div>
+        <div class="card">
+            <div class="section-label">count name <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></div>
+            <input type="text" id="count-name" placeholder="e.g. monday morning, end of week…" maxlength="60">
+        </div>
+        <div class="card">
+            <div class="section-label">current count</div>
+            <div id="count-filter" class="cat-row"></div>
+            <div id="count-list">
+                <div class="empty-state"><span class="empty-icon">📦</span>nothing scanned yet<br>go to the scan tab to add items</div>
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-full" onclick="clearCount()">🗑 clear count</button>
+            <button class="btn btn-primary btn-full" onclick="saveCount()">⚑ save count</button>
+        </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="view-history" style="display:none;">
+        <div class="stat-grid">
+            <div class="stat"><div class="stat-label">counts saved</div><div class="stat-value" id="h-counts">0</div></div>
+            <div class="stat"><div class="stat-label">products tracked</div><div class="stat-value" id="h-products">0</div></div>
+        </div>
+        <div class="card">
+            <div class="section-label">saved counts</div>
+            <div id="history-list"><div class="empty-state"><span class="empty-icon">📋</span>no counts saved yet</div></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-full" onclick="exportCSV()">↓ export CSV</button>
+            <button class="btn btn-full" onclick="exportJSON()">↓ export JSON</button>
+        </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div id="view-cache" style="display:none;">
+        <div class="stat-grid">
+            <div class="stat"><div class="stat-label">cached products</div><div class="stat-value" id="cache-count">0</div></div>
+            <div class="stat"><div class="stat-label">manual entries</div><div class="stat-value" id="cache-manual">0</div></div>
+        </div>
+        <div class="card">
+            <div class="section-label">product cache</div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">products are looked up once then stored here for instant offline access.</p>
+            <div id="cache-list"><div class="empty-state"><span class="empty-icon">🗄️</span>no products cached yet</div></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-full" onclick="refreshStaleProducts()"><span id="refresh-label">↻ refresh stale products</span></button>
+            <button class="btn btn-full" onclick="clearCache()">🗑 clear cache</button>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:8px;">stale = not verified in 30+ days</p>
+    </div>
+
+</div>
+
+<footer>
+    <div class="footer-brand">nitmoi</div>
+    <div>necessity is the mother of invention</div>
+    <div>your data never leaves your device &nbsp;·&nbsp; no account &nbsp;·&nbsp; no tracking &nbsp;·&nbsp; no nonsense</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let productCache = JSON.parse(localStorage.getItem('st_cache')   || '{}');
+    let currentCount = JSON.parse(localStorage.getItem('st_count')   || '[]');
+    let countHistory = JSON.parse(localStorage.getItem('st_history') || '[]');
+    let currentBarcode = null, currentQty = 1, currentProduct = null, activeFilter = 'all';
+
+    function save() {
+        localStorage.setItem('st_cache',   JSON.stringify(productCache));
+        localStorage.setItem('st_count',   JSON.stringify(currentCount));
+        localStorage.setItem('st_history', JSON.stringify(countHistory));
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function switchTab(t) {
+        ['scan','count','history','cache'].forEach(n => {
+            document.getElementById('view-'+n).style.display = n===t?'block':'none';
+            document.getElementById('tab-'+n).classList.toggle('active', n===t);
+        });
+        if (t==='count')   renderCount();
+        if (t==='history') renderHistory();
+        if (t==='cache')   renderCache();
+    }
+
+    async function lookupBarcode() {
+        const input   = document.getElementById('barcode-input');
+        const barcode = input.value.trim().replace(/\D/g,'');
+        if (!barcode || barcode.length < 8) { showToast('enter a valid barcode'); return; }
+        currentBarcode = barcode;
+        currentQty     = 1;
+
+        if (productCache[barcode]) {
+            productCache[barcode].lastSeen = Date.now();
+            save();
+            showProductCard(productCache[barcode], true);
+            return;
+        }
+
+        const h3 = document.getElementById('scan-zone').querySelector('h3');
+        h3.innerHTML = '<span class="spinner"></span>looking up product…';
+
+        try {
+            const res  = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+            const data = await res.json();
+            h3.textContent = 'scan or enter barcode';
+            if (data.status === 1 && data.product) {
+                const p = data.product;
+                const product = {
+                    barcode,
+                    name:     p.product_name || p.product_name_en || 'unknown product',
+                    brand:    p.brands  || '',
+                    size:     p.quantity || '',
+                    category: guessCategory(p.categories||'', p.product_name||''),
+                    source:   'api',
+                    cached:   Date.now(),
+                    lastSeen: Date.now()
+                };
+                productCache[barcode] = product;
+                save();
+                showProductCard(product, false);
+            } else {
+                document.getElementById('manual-card').style.display = 'block';
+                document.getElementById('m-name').focus();
+            }
+        } catch(e) {
+            document.getElementById('scan-zone').querySelector('h3').textContent = 'scan or enter barcode';
+            document.getElementById('manual-card').style.display = 'block';
+            showToast('offline — enter product manually');
+        }
+    }
+
+    function guessCategory(cats, name) {
+        const c = (cats+' '+name).toLowerCase();
+        if (/beer|lager|ale|stout|cider/.test(c))        return 'beer';
+        if (/wine|prosecco|champagne/.test(c))            return 'wine';
+        if (/spirit|whisky|vodka|gin|rum|brandy/.test(c)) return 'spirits';
+        if (/soft|juice|cola|water|energy/.test(c))       return 'soft drink';
+        if (/food|snack|crisp|nut/.test(c))               return 'food';
+        return 'other';
+    }
+
+    function showProductCard(product, fromCache) {
+        currentProduct = product;
+        document.getElementById('pc-name').textContent  = product.name;
+        document.getElementById('pc-brand').textContent = product.brand    || '';
+        document.getElementById('pc-size').textContent  = product.size     || '';
+        document.getElementById('pc-cat').textContent   = product.category || '';
+        document.getElementById('qty-display').textContent = '1';
+        document.getElementById('qty-unit').textContent = product.size || '';
+        const badge = document.getElementById('pc-cache-badge');
+        badge.textContent = fromCache ? '● cached' : '● fetched';
+        badge.className   = 'cache-badge ' + (fromCache ? 'cache-hit' : 'cache-miss');
+        document.getElementById('product-card').classList.add('visible');
+        document.getElementById('manual-card').style.display = 'none';
+    }
+
+    function adjustQty(d) { currentQty = Math.max(0, currentQty+d); document.getElementById('qty-display').textContent = currentQty; }
+
+    function addToCount() {
+        if (!currentProduct) return;
+        const existing = currentCount.find(i => i.barcode === currentBarcode);
+        if (existing) { existing.qty += currentQty; showToast('quantity updated'); }
+        else {
+            currentCount.push({ barcode:currentBarcode, name:currentProduct.name, brand:currentProduct.brand, size:currentProduct.size, category:currentProduct.category, qty:currentQty, ts:Date.now() });
+            showToast('added to count');
+        }
+        save(); clearScan(); renderCountStats();
+    }
+
+    function clearScan() {
+        currentProduct = null; currentBarcode = null; currentQty = 1;
+        document.getElementById('product-card').classList.remove('visible');
+        document.getElementById('manual-card').style.display = 'none';
+        document.getElementById('barcode-input').value = '';
+        document.getElementById('barcode-input').focus();
+    }
+
+    function cancelManual() { document.getElementById('manual-card').style.display='none'; document.getElementById('barcode-input').value=''; }
+
+    function saveManual() {
+        const name = document.getElementById('m-name').value.trim();
+        if (!name) { showToast('please enter a product name'); return; }
+        const product = { barcode:currentBarcode||'manual-'+Date.now(), name, brand:document.getElementById('m-brand').value.trim(), size:document.getElementById('m-size').value.trim(), category:document.getElementById('m-cat').value, source:'manual', cached:Date.now(), lastSeen:Date.now() };
+        productCache[product.barcode] = product;
+        currentProduct = product;
+        save();
+        document.getElementById('manual-card').style.display = 'none';
+        ['m-name','m-brand','m-size'].forEach(id => document.getElementById(id).value='');
+        showProductCard(product, false);
+    }
+
+    function renderCountStats() {
+        document.getElementById('c-items').textContent = currentCount.length;
+        document.getElementById('c-units').textContent = currentCount.reduce((a,i)=>a+i.qty,0);
+    }
+
+    function renderCount() {
+        renderCountStats();
+        const cats   = ['all',...new Set(currentCount.map(i=>i.category).filter(Boolean))];
+        document.getElementById('count-filter').innerHTML = cats.map(c=>`<div class="cat-pill ${c===activeFilter?'active':''}" onclick="setFilter('${c}')">${c}</div>`).join('');
+        const filtered = activeFilter==='all' ? currentCount : currentCount.filter(i=>i.category===activeFilter);
+        const listEl   = document.getElementById('count-list');
+        if (!filtered.length) { listEl.innerHTML='<div class="empty-state"><span class="empty-icon">📦</span>nothing scanned yet<br>go to the scan tab to add items</div>'; return; }
+        listEl.innerHTML = filtered.map(item=>`
+            <div class="stock-item">
+                <div><div class="stock-item-name">${item.name}</div><div class="stock-item-meta">${[item.brand,item.size,item.category].filter(Boolean).join(' · ')}</div></div>
+                <div style="text-align:right;"><div class="stock-qty">${item.qty}</div><div class="stock-qty-unit">${item.size||'units'}</div></div>
+            </div>`).join('');
+    }
+
+    function setFilter(cat) { activeFilter=cat; renderCount(); }
+
+    function clearCount() {
+        if (!currentCount.length) return;
+        if (!confirm('clear all items from the current count?')) return;
+        currentCount=[]; save(); renderCount(); showToast('count cleared');
+    }
+
+    function saveCount() {
+        if (!currentCount.length) { showToast('nothing to save'); return; }
+        const name = document.getElementById('count-name').value.trim();
+        countHistory.unshift({ name, date:new Date().toLocaleDateString('en-GB'), items:JSON.parse(JSON.stringify(currentCount)), ts:Date.now() });
+        currentCount=[];
+        document.getElementById('count-name').value='';
+        save(); showToast('count saved'); switchTab('history');
+    }
+
+    function renderHistory() {
+        document.getElementById('h-counts').textContent   = countHistory.length;
+        document.getElementById('h-products').textContent = Object.keys(productCache).length;
+        const el = document.getElementById('history-list');
+        if (!countHistory.length) { el.innerHTML='<div class="empty-state"><span class="empty-icon">📋</span>no counts saved yet</div>'; return; }
+        el.innerHTML = countHistory.map((c,i)=>{
+            const totalUnits = c.items.reduce((a,it)=>a+it.qty,0);
+            const cats = [...new Set(c.items.map(it=>it.category).filter(Boolean))];
+            return `<div class="count-record">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <span style="font-weight:500;">${c.name||c.date}</span>
+                    <span style="font-size:0.78rem;color:var(--text-muted);">${c.items.length} products</span>
+                </div>
+                ${c.name?`<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">${c.date}</div>`:''}
+                <div style="font-size:0.78rem;color:var(--text-muted);">${totalUnits} total units &nbsp;·&nbsp; ${cats.join(', ')||'mixed'}</div>
+                <div style="margin-top:8px;"><button class="btn btn-sm" onclick="exportCountCSV(${i})">↓ CSV</button></div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderCache() {
+        const products = Object.values(productCache);
+        document.getElementById('cache-count').textContent  = products.length;
+        document.getElementById('cache-manual').textContent = products.filter(p=>p.source==='manual').length;
+        const el = document.getElementById('cache-list');
+        if (!products.length) { el.innerHTML='<div class="empty-state"><span class="empty-icon">🗄️</span>no products cached yet</div>'; return; }
+        const staleMs = 30*24*60*60*1000, now = Date.now();
+        el.innerHTML = products.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0)).map(p=>{
+            const isStale = p.source!=='manual' && (now-(p.cached||0))>staleMs;
+            const lastSeen = p.lastSeen ? new Date(p.lastSeen).toLocaleDateString('en-GB') : '—';
+            return `<div class="stock-item" style="margin-bottom:6px;">
+                <div>
+                    <div class="stock-item-name">${p.name} ${isStale?'<span style="font-size:0.7rem;color:var(--warn-tx);background:var(--warn-bg);padding:1px 6px;border-radius:999px;">stale</span>':''}</div>
+                    <div class="stock-item-meta">${[p.brand,p.size,p.category].filter(Boolean).join(' · ')} &nbsp;·&nbsp; last seen ${lastSeen}</div>
+                </div>
+                <span style="font-size:0.72rem;color:var(--text-muted);">${p.source}</span>
+            </div>`;
+        }).join('');
+    }
+
+    async function refreshStaleProducts() {
+        const staleMs = 30*24*60*60*1000, now = Date.now();
+        const stale = Object.values(productCache).filter(p=>p.source!=='manual'&&(now-(p.cached||0))>staleMs);
+        if (!stale.length) { showToast('all products are fresh'); return; }
+        document.getElementById('refresh-label').innerHTML = `<span class="spinner"></span>refreshing ${stale.length} products…`;
+        let updated=0;
+        for (const p of stale) {
+            try {
+                const res=await fetch(`https://world.openfoodfacts.org/api/v0/product/${p.barcode}.json`);
+                const data=await res.json();
+                if (data.status===1&&data.product) {
+                    const pd=data.product;
+                    productCache[p.barcode]={...p,name:pd.product_name||p.name,brand:pd.brands||p.brand,size:pd.quantity||p.size,cached:Date.now()};
+                    updated++;
+                }
+            } catch(e) { break; }
+        }
+        save();
+        document.getElementById('refresh-label').textContent='↻ refresh stale products';
+        showToast(`${updated} product${updated!==1?'s':''} refreshed`);
+        renderCache();
+    }
+
+    function clearCache() {
+        if (!confirm('clear all cached product data?')) return;
+        productCache={}; save(); renderCache(); showToast('cache cleared');
+    }
+
+    function exportCSV() { if (!countHistory.length) { showToast('no counts to export'); return; } exportCountCSV(0); }
+
+    function exportCountCSV(idx) {
+        const count=countHistory[idx]; if (!count) return;
+        const rows=[['product','brand','size','category','quantity','barcode']];
+        count.items.forEach(i=>rows.push([`"${i.name}"`,`"${i.brand||''}"`,`"${i.size||''}"`,`"${i.category||''}"`,i.qty,i.barcode]));
+        const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url; a.download=`stocktap-${(count.name||count.date).replace(/\s/g,'-')}.csv`; a.click();
+        URL.revokeObjectURL(url); showToast('CSV exported');
+    }
+
+    function exportJSON() {
+        const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),countHistory,productCache},null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url; a.download=`stocktap-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
+        URL.revokeObjectURL(url); showToast('JSON backup saved');
+    }
+
+    document.getElementById('barcode-input').addEventListener('keydown', e=>{ if(e.key==='Enter') lookupBarcode(); });
+    renderCountStats();
+</script>
+</body>
+</html>
